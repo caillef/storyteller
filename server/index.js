@@ -4,6 +4,7 @@ const WebSocket = require("ws");
 const bodyParser = require("body-parser");
 const crypto = require("crypto");
 const cors = require("cors");
+const axios = require("axios");
 
 const app = express();
 const server = http.createServer(app);
@@ -31,17 +32,19 @@ async function sendMessageToAnthropic(
   };
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
+    const response = await axios.post(
+      "https://api.anthropic.com/v1/messages",
+      requestBody,
+      {
+        headers: {
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+        },
       },
-      body: JSON.stringify(requestBody),
-    });
+    );
 
-    const data = await response.json();
+    const data = response.data;
     return data;
   } catch (error) {
     console.error("Error:", error);
@@ -63,7 +66,7 @@ async function generateAIResponse(story) {
           story +
           " You must complete as a storyteller and describe the environment, enemies, like a story. Players will interact with the story so you must create interesting setup that could enable creativity. You must only respond with three sentences maximum, and only with the story, nothing else. You will lose points if you answer with something else, never play another role, you must always answer with the story. If the story is in french, write in french, if spanish, wirte spanish. You must match the language.",
       );
-      resolve(`${story}\n\nStory:` + result.content[0].text + "\n\n");
+      resolve(`${story}\n\nNarrateur: ` + result.content[0].text + "\n\n");
     } catch (err) {
       console.error(err);
       reject();
