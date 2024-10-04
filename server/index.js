@@ -4,7 +4,40 @@ const WebSocket = require("ws");
 const bodyParser = require("body-parser");
 const crypto = require("crypto");
 const cors = require("cors");
-const axios = require("axios");
+const https = require("https");
+function makeRequest(url, method = "GET", postData = null, headers = {}) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      method: method,
+      headers: headers,
+    };
+
+    const req = https.request(url, options, (resp) => {
+      let data = "";
+
+      resp.on("data", (chunk) => {
+        data += chunk;
+      });
+
+      resp.on("end", () => {
+        try {
+          resolve(JSON.parse(data));
+        } catch (e) {
+          reject("Unable to parse response as JSON");
+        }
+      });
+    });
+
+    req.on("error", (err) => {
+      reject(`Error: ${err.message}`);
+    });
+
+    if (postData) {
+      req.write(postData);
+    }
+    req.end();
+  });
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -32,19 +65,19 @@ async function sendMessageToAnthropic(
   };
 
   try {
-    const response = await axios.post(
+    const response = await makeRequest(
       "https://api.anthropic.com/v1/messages",
-      requestBody,
+      "POST",
+      JSON.stringify(requestBody),
       {
-        headers: {
-          "x-api-key": ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-          "content-type": "application/json",
-        },
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
       },
     );
 
-    const data = response.data;
+    console.log(response);
+    const data = response;
     return data;
   } catch (error) {
     console.error("Error:", error);
