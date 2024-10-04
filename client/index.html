@@ -93,7 +93,7 @@
                 storyArea.scrollTop = storyArea.scrollHeight;
             }
             let sessionToken = "";
-            const API_URL = "https://api-storyteller.caillef.com";
+            const API_URL = "http://localhost:3000";
 
             async function authenticate() {
                 const discordToken =
@@ -169,7 +169,7 @@
             }
 
             // Optional: Set up WebSocket for real-time updates
-            const socket = new WebSocket("wss://api-storyteller.caillef.com");
+            const socket = new WebSocket("ws://localhost:3000");
             socket.onmessage = function (event) {
                 const data = JSON.parse(event.data);
                 if (data.type === "storyUpdate") {
