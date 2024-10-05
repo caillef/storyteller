@@ -93,7 +93,8 @@
                 storyArea.scrollTop = storyArea.scrollHeight;
             }
             let sessionToken = "";
-            const API_URL = "https://api-storyteller.caillef.com";
+            const API_URL = "http://localhost:3000";
+            let eventSource;
 
             async function authenticate() {
                 const discordToken =
@@ -133,6 +134,7 @@
                         .getElementById("storySection")
                         .classList.remove("hidden");
                     getStory();
+                    setupSSE();
                 } catch (error) {
                     console.error("Join session error:", error);
                 }
@@ -145,7 +147,7 @@
                     );
                     const data = await response.json();
                     document.getElementById("storyArea").innerText = data.story;
-                    scrollToBottom("storyArea");
+                    scrollToBottom();
                 } catch (error) {
                     console.error("Get story error:", error);
                 }
@@ -162,21 +164,28 @@
                     });
                     await response.json();
                     document.getElementById("contributionInput").value = "";
-                    getStory();
                 } catch (error) {
                     console.error("Contribute error:", error);
                 }
             }
 
-            // Optional: Set up WebSocket for real-time updates
-            const socket = new WebSocket("wss://api-storyteller.caillef.com");
-            socket.onmessage = function (event) {
-                const data = JSON.parse(event.data);
-                if (data.type === "storyUpdate") {
-                    document.getElementById("storyArea").innerText = data.story;
-                    scrollToBottom("storyArea");
-                }
-            };
+            function setupSSE() {
+                eventSource = new EventSource(`${API_URL}/sse`);
+
+                eventSource.onmessage = function (event) {
+                    const data = JSON.parse(event.data);
+                    if (data.type === "storyUpdate") {
+                        document.getElementById("storyArea").innerText =
+                            data.story;
+                        scrollToBottom();
+                    }
+                };
+
+                eventSource.onerror = function (error) {
+                    console.error("EventSource failed:", error);
+                    eventSource.close();
+                };
+            }
         </script>
     </body>
 </html>
