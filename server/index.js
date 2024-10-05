@@ -204,17 +204,28 @@ app.post("/contribute", async (req, res) => {
     return res.status(403).json({ error: "AI is generating, please wait" });
   }
 
-  session.story += `\n\n${user.name}: ${contribution}`;
+  const playerContribution = `\n\n${user.name}: ${contribution}`;
+  session.story += playerContribution;
   session.isGenerating = true;
 
   res.json({ message: "Contribution added" });
+
+  // Send player's contribution to all clients
+  if (global.clients) {
+    global.clients.forEach((sendEvent) => {
+      sendEvent({
+        type: "playerContribution",
+        contribution: playerContribution,
+      });
+    });
+  }
 
   // Trigger AI response
   const aiResponse = await generateAIResponse(session.story);
   session.story = aiResponse;
   session.isGenerating = false;
 
-  // Notify clients via SSE
+  // Notify clients via SSE with AI response
   if (global.clients) {
     global.clients.forEach((sendEvent) => {
       sendEvent({ type: "storyUpdate", story: aiResponse });
