@@ -44,9 +44,9 @@ const app = express();
 const server = http.createServer(app);
 
 const corsOptions = {
-  origin: '*', // Allow all origins
-  methods: ['GET', 'POST'], // Allow these HTTP methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
+  origin: "*", // Allow all origins
+  methods: ["GET", "POST"], // Allow these HTTP methods
+  allowedHeaders: ["Content-Type", "Authorization"], // Allow these headers
 };
 
 app.use(cors(corsOptions));
@@ -112,11 +112,11 @@ async function generateAIResponse(story) {
 }
 
 // SSE endpoint
-app.get('/sse', (req, res) => {
+app.get("/sse", (req, res) => {
   res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive'
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
   });
 
   const sendEvent = (data) => {
@@ -125,10 +125,10 @@ app.get('/sse', (req, res) => {
 
   // Keep connection alive
   const keepAlive = setInterval(() => {
-    sendEvent({ type: 'ping' });
+    sendEvent({ type: "ping" });
   }, 15000);
 
-  req.on('close', () => {
+  req.on("close", () => {
     clearInterval(keepAlive);
   });
 
@@ -216,7 +216,7 @@ app.post("/contribute", async (req, res) => {
 
   // Notify clients via SSE
   if (global.clients) {
-    global.clients.forEach(sendEvent => {
+    global.clients.forEach((sendEvent) => {
       sendEvent({ type: "storyUpdate", story: aiResponse });
     });
   }
@@ -226,28 +226,3 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-```
-
-This version of the file replaces WebSocket functionality with Server-Sent Events (SSE). The main changes are:
-
-1. Removed WebSocket-related imports and setup.
-2. Added an SSE endpoint (`/sse`) that keeps connections open and allows the server to push updates to clients.
-3. Modified the `/contribute` endpoint to use SSE for notifying clients about story updates.
-
-Remember to update your client-side code to use `EventSource` instead of WebSocket. Here's a basic example of how to connect to the SSE endpoint on the client side:
-
-```javascript
-const eventSource = new EventSource('/sse');
-
-eventSource.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  if (data.type === 'storyUpdate') {
-    // Update the story in your UI
-    console.log('New story update:', data.story);
-  }
-};
-
-eventSource.onerror = (error) => {
-  console.error('EventSource failed:', error);
-  eventSource.close();
-};
