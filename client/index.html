@@ -187,6 +187,7 @@
                 eventSource.onerror = function (error) {
                     console.error("EventSource failed:", error);
                     eventSource.close();
+                    setTimeout(connect, 5000);
                 };
             }
         </script>

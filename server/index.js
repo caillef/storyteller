@@ -43,7 +43,13 @@ function makeRequest(url, method = "GET", postData = null, headers = {}) {
 const app = express();
 const server = http.createServer(app);
 
-app.use(cors());
+const corsOptions = {
+  origin: '*', // Allow all origins
+  methods: ['GET', 'POST'], // Allow these HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
+};
+
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 // In-memory storage
