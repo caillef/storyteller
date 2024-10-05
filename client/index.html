@@ -93,7 +93,10 @@
                 storyArea.scrollTop = storyArea.scrollHeight;
             }
             let sessionToken = "";
-            const API_URL = "http://localhost:3000";
+            const IS_LOCAL = true;
+            const API_URL = IS_LOCAL
+                ? "http://localhost:3000"
+                : "https://api-storyteller.caillef.com";
             let eventSource;
 
             async function authenticate() {
