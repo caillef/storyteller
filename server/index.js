@@ -103,6 +103,11 @@ async function generateAIResponse(story) {
           story +
           " You must complete as a storyteller and describe the environment, enemies, like a story. Players will interact with the story so you must create interesting setup that could enable creativity. You must only respond with three sentences maximum, and only with the story, nothing else. You will lose points if you answer with something else, never play another role, you must always answer with the story. If the story is in french, write in french, if spanish, write spanish. You must match the language.",
       );
+      if (result.type === "error") {
+        resolve(
+          `${story}\n\nError ${result.error.message}, try again in a few minutes.\n\n`,
+        );
+      }
       resolve(`${story}\n\nNarrateur: ` + result.content[0].text + "\n\n");
     } catch (err) {
       console.error(err);
