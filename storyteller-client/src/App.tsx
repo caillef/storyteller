@@ -223,7 +223,7 @@ const App: React.FC = () => {
       <RightColumn>
         {isJoined && story.length > 0 && story[story.length - 1].image_url && (
           <Image
-            src={story[story.length - 1].image_url}
+            src={"/api" + story[story.length - 1].image_url}
             alt={`Image for ${story[story.length - 1].author}'s contribution`}
           />
         )}
