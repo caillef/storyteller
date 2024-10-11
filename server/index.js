@@ -42,6 +42,7 @@ function makeRequest(url, method = "GET", postData = null, headers = {}) {
 
 const app = express();
 const server = http.createServer(app);
+app.use(express.static(path.join(__dirname, "public")));
 
 const corsOptions = {
   origin: "*", // Allow all origins
@@ -51,6 +52,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, "public")));
 
 // In-memory storage
 const users = new Map();
@@ -132,7 +134,17 @@ async function generateAIResponse(story) {
         });
 
         const response = await makeRequest(url, method, postData, headers);
-        imageUrl = response.data[0].url;
+        const imageUrl = response.data[0].url;
+        const imageName = `image_${Date.now()}.png`;
+        const imagePath = `public/${imageName}`;
+
+        const imageResponse = await makeRequest(imageUrl, "GET");
+        require("fs").writeFileSync(
+          imagePath,
+          Buffer.from(imageResponse, "binary"),
+        );
+
+        imageUrl = `/${imageName}`;
       } catch (error) {
         return resolve([
           {
