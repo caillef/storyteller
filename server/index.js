@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const crypto = require("crypto");
 const cors = require("cors");
 const https = require("https");
+const openai = require("openai");
 require("dotenv").config();
 
 function makeRequest(url, method = "GET", postData = null, headers = {}) {
@@ -101,8 +102,8 @@ async function generateAIResponse(story) {
     try {
       const result = await sendMessageToAnthropic(
         "Here is a story:" +
-          story +
-          " You must complete as a storyteller and describe the environment, enemies, like a story. Players will interact with the story so you must create interesting setup that could enable creativity. You must only respond with three sentences maximum, and only with the story, nothing else. You will lose points if you answer with something else, never play another role, you must always answer with the story. If the story is in french, write in french, if spanish, write spanish. You must match the language.",
+          JSON.stringify(story) +
+          ' You must complete as a storyteller and describe the environment, enemies, like a story. Players will interact with the story so you must create interesting setup that could enable creativity. You must only respond with three sentences maximum, the format is a json like this {text:"HERE YOU WRITE THE REST OF THE STORY", image_description:"HERE A SENTENCE GIVING ALL THE DETAILS ABOUT THE SCENE"}. You will lose points if you answer with something else, never play another role, you must always answer with the story. If the story is in french, write in french, if spanish, write spanish. You must match the language. I am parsing the response with JSON.parse so you must answer with only the json.',
       );
       if (result.type === "error") {
         resolve([
@@ -112,10 +113,41 @@ async function generateAIResponse(story) {
           },
         ]);
       }
+
+      const responseJson = JSON.parse(result.content[0].text);
+      let imageUrl;
+      try {
+        const prompt = responseJson.image_description + ", isometric view";
+
+        const url = "https://api.openai.com/v1/images/generations";
+        const method = "POST";
+        const headers = {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+        };
+        const postData = JSON.stringify({
+          model: "dall-e-3",
+          prompt: prompt,
+          n: 1,
+          size: "1024x1024",
+        });
+
+        const response = await makeRequest(url, method, postData, headers);
+        imageUrl = response.data[0].url;
+      } catch (error) {
+        return resolve([
+          {
+            author: "System",
+            text: `Error ${error}, try again in a few minutes.`,
+          },
+        ]);
+      }
+
       resolve([
         {
           author: "Narrateur",
-          text: result.content[0].text,
+          text: responseJson.text,
+          image_url: imageUrl,
         },
       ]);
     } catch (err) {
