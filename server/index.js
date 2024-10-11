@@ -57,6 +57,7 @@ const users = new Map();
 let session = null;
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 async function sendMessageToAnthropic(
   message,
@@ -104,11 +105,19 @@ async function generateAIResponse(story) {
           " You must complete as a storyteller and describe the environment, enemies, like a story. Players will interact with the story so you must create interesting setup that could enable creativity. You must only respond with three sentences maximum, and only with the story, nothing else. You will lose points if you answer with something else, never play another role, you must always answer with the story. If the story is in french, write in french, if spanish, write spanish. You must match the language.",
       );
       if (result.type === "error") {
-        resolve(
-          `${story}\n\nError ${result.error.message}, try again in a few minutes.\n\n`,
-        );
+        resolve([
+          {
+            author: "System",
+            text: `Error ${result.error.message}, try again in a few minutes.`,
+          },
+        ]);
       }
-      resolve(`${story}\n\nNarrateur: ` + result.content[0].text + "\n\n");
+      resolve([
+        {
+          author: "Narrateur",
+          text: result.content[0].text,
+        },
+      ]);
     } catch (err) {
       console.error(err);
       reject();
@@ -163,7 +172,7 @@ app.post("/join", (req, res) => {
     session = {
       id: sessionId,
       players: [sessionToken],
-      story: "",
+      story: [],
       isGenerating: false,
       isReady: false,
     };
@@ -209,8 +218,8 @@ app.post("/contribute", async (req, res) => {
     return res.status(403).json({ error: "AI is generating, please wait" });
   }
 
-  const playerContribution = `\n\n${user.name}: ${contribution}`;
-  session.story += playerContribution;
+  const playerContribution = { author: user.name, text: contribution };
+  session.story = [...session.story, playerContribution];
   session.isGenerating = true;
 
   res.json({ message: "Contribution added" });
@@ -227,7 +236,7 @@ app.post("/contribute", async (req, res) => {
 
   // Trigger AI response
   const aiResponse = await generateAIResponse(session.story);
-  session.story = aiResponse;
+  session.story = [...session.story, ...aiResponse];
   session.isGenerating = false;
 
   // Notify clients via SSE with AI response
