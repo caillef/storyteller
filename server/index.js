@@ -4,7 +4,6 @@ const bodyParser = require("body-parser");
 const crypto = require("crypto");
 const cors = require("cors");
 const https = require("https");
-const openai = require("openai");
 require("dotenv").config();
 
 function makeRequest(url, method = "GET", postData = null, headers = {}) {
