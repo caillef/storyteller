@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const crypto = require("crypto");
 const cors = require("cors");
 const https = require("https");
+const path = require("path");
 require("dotenv").config();
 
 function makeRequest(url, method = "GET", postData = null, headers = {}) {
@@ -23,6 +24,40 @@ function makeRequest(url, method = "GET", postData = null, headers = {}) {
       resp.on("end", () => {
         try {
           resolve(JSON.parse(data));
+        } catch (e) {
+          reject("Unable to parse response as JSON");
+        }
+      });
+    });
+
+    req.on("error", (err) => {
+      reject(`Error: ${err.message}`);
+    });
+
+    if (postData) {
+      req.write(postData);
+    }
+    req.end();
+  });
+}
+
+function makeRawRequest(url, method = "GET", postData = null, headers = {}) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      method: method,
+      headers: headers,
+    };
+
+    const req = https.request(url, options, (resp) => {
+      let data = "";
+
+      resp.on("data", (chunk) => {
+        data += chunk;
+      });
+
+      resp.on("end", () => {
+        try {
+          resolve(data);
         } catch (e) {
           reject("Unable to parse response as JSON");
         }
@@ -138,7 +173,7 @@ async function generateAIResponse(story) {
         const imageName = `image_${Date.now()}.png`;
         const imagePath = `public/${imageName}`;
 
-        const imageResponse = await makeRequest(imageUrl, "GET");
+        const imageResponse = await makeRawRequest(imageUrl, "GET");
         require("fs").writeFileSync(
           imagePath,
           Buffer.from(imageResponse, "binary"),
