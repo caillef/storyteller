@@ -169,11 +169,11 @@ async function generateAIResponse(story) {
         });
 
         const response = await makeRequest(url, method, postData, headers);
-        const imageUrl = response.data[0].url;
+        const openAIimageUrl = response.data[0].url;
         const imageName = `image_${Date.now()}.png`;
         const imagePath = `public/${imageName}`;
 
-        const imageResponse = await makeRawRequest(imageUrl, "GET");
+        const imageResponse = await makeRawRequest(openAIimageUrl, "GET");
         require("fs").writeFileSync(
           imagePath,
           Buffer.from(imageResponse, "binary"),
