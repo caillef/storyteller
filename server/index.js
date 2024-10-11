@@ -49,18 +49,15 @@ function makeRawRequest(url, method = "GET", postData = null, headers = {}) {
     };
 
     const req = https.request(url, options, (resp) => {
-      let data = "";
+      const chunks = [];
 
       resp.on("data", (chunk) => {
-        data += chunk;
+        chunks.push(chunk);
       });
 
       resp.on("end", () => {
-        try {
-          resolve(data);
-        } catch (e) {
-          reject("Unable to parse response as JSON");
-        }
+        const buffer = Buffer.concat(chunks);
+        resolve(buffer);
       });
     });
 
